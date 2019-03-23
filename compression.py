@@ -12,8 +12,6 @@ class compression(object):
 		# Quantization Matrix 
 		self.quant = np.array([[16,11,10,16,24,40,51,61],[12,12,14,19,26,58,60,55],[14,13,16,24,40,57,69,56 ],[14,17,22,29,51,87,80,62],[18,22,37,56,68,109,103,77],[24,35,55,64,81,104,113,92],[49,64,78,87,103,121,120,101],[72,92,95,98,112,100,103,99]])
 
-		
-
 	def RLE(self,image):
 	    i = 0
 	    skip = 0
@@ -102,7 +100,6 @@ class compression(object):
 	        			h = h + 1
 	        		else:
 	        			v = v + 1
-
 	        		i = i + 1
 
 	        	elif ((v < vmax -1) and (h > hmin)):     # all other cases
@@ -159,23 +156,18 @@ class compression(object):
 						v = v + 1
 					else:
 						h = h + 1                        
-
 					i = i + 1
-
 				elif ((h == hmax -1 ) and (v < vmax)):   # if we got to the last column
 					#print(2)
 					output[v, h] = input[i] 
 					v = v + 1
 					i = i + 1
-
 				elif ((v > vmin) and (h < hmax -1 )):    # all other cases
 					#print(3)
 					output[v, h] = input[i] 
 					v = v - 1
 					h = h + 1
-					i = i + 1
-
-	        
+					i = i + 1 
 			else:                                    # going down
 
 				if ((v == vmax -1) and (h <= hmax -1)):       # if we got to the last line
@@ -198,10 +190,6 @@ class compression(object):
 					v = v + 1
 					h = h - 1
 					i = i + 1
-
-
-
-
 			if ((v == vmax-1) and (h == hmax-1)):          # bottom right element
 				#print(7)        	
 				output[v, h] = input[i] 
@@ -250,7 +238,6 @@ class compression(object):
 			# p_frame = padded_img - padded_prev_image
 			# padded_prev_image = padded_img
 			
-
 			# cv2.imwrite('uncompressed.bmp', np.uint8(padded_img))
 			cv2.imshow('encoded image', np.uint8(padded_img))
 			# out.write(np.uint8(padded_img))
