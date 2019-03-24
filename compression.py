@@ -48,7 +48,9 @@ class compression(object):
 		W =  self.block_size * self.nbw
 		# create a numpy zero matrix with size of H,W
 		padded_img = np.zeros((H,W))
+		# cv2.imshow("inside_image", padded_img[0:height,0:width])
 		padded_img[0:height,0:width] = image[0:height,0:width]
+		# cv2.imshow("inside_image", padded_img)
 		return padded_img
 	def zigzag(sefl,input):
 	    #initializing the variables
@@ -205,13 +207,15 @@ class compression(object):
 
 			img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-		 	# cv2.imshow("nakmli image",img[0:height,0:width] )
+		 	# cv2.imshow("nakli image", frame )
 			# start encoding:
 			# divide image into block size by block size (here: 8-by-8) blocks
 			# To each block apply 2D discrete cosine transform
 			# reorder DCT coefficients in zig-zag order
 			# reshaped it back to block size by block size (here: 8-by-8)
 			padded_img = self.black_image(img)
+			# cv2.imshow("padded_img", padded_img)
+			# cv2.imshow("original image", img)
 			for i in range(self.nbh):			    
 			        # Compute start and end row index of the block
 			        row_ind_1 = i*self.block_size                
@@ -221,25 +225,35 @@ class compression(object):
 			            # Compute start & end column index of the block
 			            col_ind_1 = j*self.block_size                       
 			            col_ind_2 = col_ind_1+self.block_size			                        
-			            block = padded_img[ row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2 ]			                       
+			            block = padded_img[ row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2 ]		
+			            # print block, type(block)	                       
 			            # apply 2D discrete cosine transform to the selected block                       
 			            DCT = cv2.dct(block)            
 			            DCT_normalized = np.divide(DCT,self.quant).astype(int)   
 			            
 			            # reorder DCT coefficients in zig zag order by calling zigzag function
 			            # it will give you a one dimentional array
-			            reordered = self.zigzag(DCT_normalized)			            
+			            # print DCT_normalized
+			            reordered = self.zigzag(DCT_normalized)	
+
+
 			            # reshape the reorderd array back to (block size by block size) (here: 8-by-8)
 			            reshaped= np.reshape(reordered, (self.block_size, self.block_size)) 
+			            # print reshaped, type(reshaped)   
 			            # cv2.imshow("img"+ str(i), reordered )
 			            # copy reshaped matrix into padded_img on current block corresponding indices
-			            padded_img[row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2] = reshaped                        
+			            padded_img[row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2] = reshaped 
 
+			            # padded_prev_image[row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2] = padded_img[row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2]
+
+			# print padded_img, np.uint8(padded_img)
 			# p_frame = padded_img - padded_prev_image
 			# padded_prev_image = padded_img
 			
 			# cv2.imwrite('uncompressed.bmp', np.uint8(padded_img))
-			cv2.imshow('encoded image', np.uint8(padded_img))
+			# cv2.imshow('encoded image', np.uint8(padded_img))
+
+			self.decompress_algo(padded_img)
 			# out.write(np.uint8(padded_img))
 			# arranged = padded_img.flatten()
 			# Now RLE encoded data is written to a text file (You can check no of bytes in text file is very less than no of bytes in the image
@@ -257,6 +271,38 @@ class compression(object):
 			# file1.close()
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
+	def decompress_algo(self,compressed_img):
+		padded_img =np.zeros((self.image_h, self.image_w))
+		# cv2.imshow("decompression padded image", compressed_img)
+		# reshaped = np.reshape(compressed_img,(self.image_h, self.image_w))
+		# cv2.imshow("reshaped", reshaped)
+		for i in range(self.nbh):			    
+		        # Compute start and end row index of the block
+		        row_ind_1 = i*self.block_size                
+		        row_ind_2 = row_ind_1+self.block_size
+	     
+		        for j in range(self.nbw):			            
+		            # Compute start & end column index of the block
+		            col_ind_1 = j*self.block_size                       
+		            col_ind_2 = col_ind_1+self.block_size			                        
+		            block = (compressed_img[ row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2 ])
+		            # apply 2D discrete cosine transform to the selected block   
+		            
+		            block = self.inverse_zigzag(np.int8(block.flatten()), self.block_size, self.block_size)
+		            # print block
+		            de_quantize = np.multiply(block,self.quant)                 
+		            inverse_DCT = cv2.idct(de_quantize)            		            
+		            # reshape the reorderd array back to (block size by block size) (here: 8-by-8)
+		            reshaped= np.reshape(inverse_DCT, (self.block_size, self.block_size)) 
+		            # cv2.imshow("img"+ str(i), reordered )
+		            # copy reshaped matrix into padded_img on current block corresponding indices
+		            padded_img[row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2] = reshaped 
+
+		# # clamping to  8-bit max-min values
+		# padded_img[padded_img > 255] = 255
+		# padded_img[padded_img < 0] = 0
+		cv2.imshow("uncompressed", np.uint8(padded_img))
+
 
 if __name__ == '__main__':
 	comp = compression()
