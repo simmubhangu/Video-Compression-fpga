@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import time
 
 class compression(object):
 	"""docstring for compression"""
@@ -15,19 +16,42 @@ class compression(object):
 	def RLE(self,image):
 	    i = 0
 	    skip = 0
-	    stream = []    
-	    bitstream = ""
+	    # stream = []    
+	    bitstream = []
 	    image = image.astype(int)
+	    # print image.shape[0]
 	    while i < image.shape[0]:
 	        if image[i] != 0:            
-	            stream.append((image[i],skip))
-	            bitstream = bitstream + str(image[i])+ " " +str(skip)+ " "
+	            # stream.append((image[i],skip))
+	            bitstream.append(image[i])
+	            bitstream.append(skip)
+	            # bitstream = bitstream + str(image[i])+ " " +str(skip)+ " "
 	            skip = 0
 	        else:
 	            skip = skip + 1
 	        i = i + 1
 
 	    return bitstream
+	def RLD(self,decode):
+	    i = 0
+	    skip = 0   
+	    image = []
+	    
+	    while i != len(decode):
+	    	# image.append(decode[i])
+	        if decode[i+1] != 0:
+	        	while skip != (decode[i+1]):
+	        		image.append(0)
+	        		skip=skip+1
+	            # bitstream = bitstream + str(image[i])+ " " +str(skip)+ " "
+	        image.append(decode[i])
+	        i = i + 2
+	        skip=0
+	    if (i==len(decode)):
+	    	for m in range(0, (307200-len(image))):
+	    		image.append(0)
+	    # print len(image)
+	    return image
 	def black_image(self,image):
 		# No of blocks needed : Calculation
 		height = self.image_h
@@ -253,14 +277,28 @@ class compression(object):
 			# cv2.imwrite('uncompressed.bmp', np.uint8(padded_img))
 			# cv2.imshow('encoded image', np.uint8(padded_img))
 
-			self.decompress_algo(padded_img)
+			
+
+
 			# out.write(np.uint8(padded_img))
-			# arranged = padded_img.flatten()
+			arranged = padded_img.flatten()
 			# Now RLE encoded data is written to a text file (You can check no of bytes in text file is very less than no of bytes in the image
 			# THIS IS COMPRESSION WE WANTED, NOTE THAT ITS JUST COMPRESSION DUE TO RLE, YOU CAN COMPRESS IT FURTHER USING HUFFMAN CODES OR MAY BE 
 			# REDUCING MORE FREQUENCY COEFFICIENTS TO ZERO)
+			# print "=================================================================================="
+			# print len(arranged)
+			bitstream = self.RLE(arranged)
+			# print len(bitstream)
 
-			# bitstream = get_run_length_encoding(arranged)
+			value = self.RLD(bitstream)
+			# print " value =================================================================================="
+			# print (value[150000:150010])
+			# print len(value)
+			value = np.reshape(value,(self.image_h,self.image_w))
+			# print type(value)
+			# print value
+			self.decompress_algo(value)
+
 
 			# Two terms are assigned for size as well, semicolon denotes end of image to reciever
 			# bitstream = str(padded_img.shape[0]) + " " + str(padded_img.shape[1]) + " " + bitstream + ";"
@@ -290,7 +328,7 @@ class compression(object):
 		            
 		            block = self.inverse_zigzag(np.int8(block.flatten()), self.block_size, self.block_size)
 		            # print block
-		            de_quantize = np.multiply(block,self.quant)                 
+		            de_quantize = np.multiply(block,self.quant)            
 		            inverse_DCT = cv2.idct(de_quantize)            		            
 		            # reshape the reorderd array back to (block size by block size) (here: 8-by-8)
 		            reshaped= np.reshape(inverse_DCT, (self.block_size, self.block_size)) 
