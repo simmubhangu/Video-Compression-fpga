@@ -85,7 +85,7 @@ class compression(object):
 	    hmin = 0
 	    vmax = input.shape[0]
 	    hmax = input.shape[1]
-	    #print(vmax ,hmax )
+	    print(vmax ,hmax )
 	    i = 0
 	    output = np.zeros(( vmax * hmax))
 	    #----------------------------------
@@ -231,7 +231,7 @@ class compression(object):
 
 			img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-		 	# cv2.imshow("nakli image", frame )
+		 	cv2.imshow("original Image", frame )
 			# start encoding:
 			# divide image into block size by block size (here: 8-by-8) blocks
 			# To each block apply 2D discrete cosine transform
@@ -252,8 +252,10 @@ class compression(object):
 			            block = padded_img[ row_ind_1 : row_ind_2 , col_ind_1 : col_ind_2 ]		
 			            # print block, type(block)	                       
 			            # apply 2D discrete cosine transform to the selected block                       
-			            DCT = cv2.dct(block)            
+			            DCT = cv2.dct(block)   
+			            # cv2.imshow("subimage"+str(i), DCT)         
 			            DCT_normalized = np.divide(DCT,self.quant).astype(int)   
+			            # cv2.imshow("subimage"+str(i), DCT_normalized)         
 			            
 			            # reorder DCT coefficients in zig zag order by calling zigzag function
 			            # it will give you a one dimentional array
@@ -275,7 +277,7 @@ class compression(object):
 			# padded_prev_image = padded_img
 			
 			# cv2.imwrite('uncompressed.bmp', np.uint8(padded_img))
-			# cv2.imshow('encoded image', np.uint8(padded_img))
+			cv2.imshow('Zig-zag Combined image', np.uint8(padded_img))
 
 			
 
